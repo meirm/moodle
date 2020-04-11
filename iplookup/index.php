@@ -83,13 +83,19 @@ if (empty($CFG->googlemapkey3)) {
     $imgheight = 310;
     $dotwidth  = 18;
     $dotheight = 30;
+    $lon_sign = 1;
+    $lon_margin = "left";
+    if (right_to_left()){
+       $lon_sign = -1;
+       $lon_margin = "right";
+    }
 
-    $dx = round((($info['longitude'] + 180 ) * ($imgwidth / 360)) - $imgwidth - $dotwidth/2);
+    $dx = round((( $lon_sign * $info['longitude'] + 180 ) * ($imgwidth / 360)) - $imgwidth - $dotwidth/2);
     $dy = round((($info['latitude'] ) * ($imgheight / 90)) + $dotheight);
 
     echo '<div id="map" style="width:'.$imgwidth.'px; height:'.$imgheight.'px;">';
     echo '<img src="earth.jpeg" style="width:'.$imgwidth.'px; height:'.$imgheight.'px" alt="" />';
-    echo '<img src="marker.gif" style="width:'.$dotwidth.'px; height:'.$dotheight.'px; margin-left:'.$dx.'px; margin-bottom:'.$dy.'px;" alt="'. $info['latitude'] . ', ' . $info['longitude'] .'" />';
+    echo '<img src="marker.gif" style="width:'.$dotwidth.'px; height:'.$dotheight.'px; margin-'.$lon_margin.':'.$dx.'px; margin-bottom:'.$dy.'px;" alt="'. $info['latitude'] . ', ' . $info['longitude'] .'" />';
     echo '</div>';
     echo '<div id="details">'. $info['latitude'] . ', ' . $info['longitude'] .'</div>';
     echo '<div id="note">'.$info['note'].'</div>';
