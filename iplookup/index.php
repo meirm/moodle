@@ -19,8 +19,8 @@
  *
  * This script is not compatible with IPv6.
  *
- * @package    core_iplookup
- * @copyright  2008 Petr Skoda (http://skodak.org)
+ * @package    iplookup
+ * @copyright  2020 Meir Michanie (https://www.riunx.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -77,8 +77,13 @@ $title = implode(' - ', $info['title']);
 $PAGE->set_title(get_string('iplookup', 'admin').': '.$title);
 $PAGE->set_heading($title);
 echo $OUTPUT->header();
-
-if (empty($CFG->googlemapkey3)) {
+$mapproviders = array ( 'worldmap', 'openstreetmap', 'google' );
+$mapprovider_id = get_config('iplookup','mapprovider');
+$mapprovider = $mapproviders[$mapprovider_id];
+$lon = $info['longitude'];
+$lat = $info['latitude'];
+//$mapprovider = "openstreetmap";
+function worldmap($lat,$lon){
     $imgwidth  = 620;
     $imgheight = 310;
     $dotwidth  = 18;
@@ -86,31 +91,55 @@ if (empty($CFG->googlemapkey3)) {
     $lon_sign = 1;
     $lon_margin = "left";
     if (right_to_left()){
-       $lon_sign = -1;
-       $lon_margin = "right";
+    	$lon_sign = -1;
+    	$lon_margin = "right";
     }
 
-    $dx = round((( $lon_sign * $info['longitude'] + 180 ) * ($imgwidth / 360)) - $imgwidth - $dotwidth/2);
-    $dy = round((($info['latitude'] ) * ($imgheight / 90)) + $dotheight);
+    $dx = round((( $lon_sign * $lon + 180 ) * ($imgwidth / 360)) - $imgwidth - $dotwidth/2);
+    $dy = round((($lat) * ($imgheight / 90)) + $dotheight);
 
     echo '<div id="map" style="width:'.$imgwidth.'px; height:'.$imgheight.'px;">';
     echo '<img src="earth.jpeg" style="width:'.$imgwidth.'px; height:'.$imgheight.'px" alt="" />';
-    echo '<img src="marker.gif" style="width:'.$dotwidth.'px; height:'.$dotheight.'px; margin-'.$lon_margin.':'.$dx.'px; margin-bottom:'.$dy.'px;" alt="'. $info['latitude'] . ', ' . $info['longitude'] .'" />';
+    echo '<img src="marker.gif" style="width:'.$dotwidth.'px; height:'.$dotheight.'px; margin-'.$lon_margin.':'.$dx.'px; margin-bottom:'.$dy.'px;" alt="'. $lat . ', ' . $lon .'" />';
     echo '</div>';
-    echo '<div id="details">'. $info['latitude'] . ', ' . $info['longitude'] .'</div>';
-    echo '<div id="note">'.$info['note'].'</div>';
-
-} else {
-    if (is_https()) {
-        $PAGE->requires->js(new moodle_url('https://maps.googleapis.com/maps/api/js', array('key'=>$CFG->googlemapkey3, 'sensor'=>'false')));
-    } else {
-        $PAGE->requires->js(new moodle_url('http://maps.googleapis.com/maps/api/js', array('key'=>$CFG->googlemapkey3, 'sensor'=>'false')));
-    }
-    $module = array('name'=>'core_iplookup', 'fullpath'=>'/iplookup/module.js');
-    $PAGE->requires->js_init_call('M.core_iplookup.init3', array($info['latitude'], $info['longitude'], $ip), true, $module);
-
-    echo '<div id="map" style="width: 650px; height: 360px"></div>';
-    echo '<div id="note">'.$info['note'].'</div>';
 }
+function openstreetmap($lat,$lon){
+    //bounding box calculation to set the initial "zoom level" on the map:
+    $bboxleft = $lon-1.8270;
+    $bboxbottom = $lat-1.0962;
+    $bboxright =  $lon+1.8270;
+    $bboxtop =  $lat+1.0962;
+    
+    echo '<div id="map" style="width: 610px; height: 310px">';
+    echo '<object data="https://www.openstreetmap.org/export/embed.html?bbox='.$bboxleft.'%2C'.$bboxbottom.'%2C'.$bboxright.'%2C'.$bboxtop.'&layer=mapnik&marker='.$lat.'%2C'.$lon.'" width="100%" height="100%"></object>';
+    echo '</div>';
+
+}
+function googlemap($lat,$lon){
+        if (is_https()) {
+            $PAGE->requires->js(new moodle_url('https://maps.googleapis.com/maps/api/js', array('key'=>$CFG->googlemapkey3, 'sensor'=>'false')));
+        } else {
+            $PAGE->requires->js(new moodle_url('http://maps.googleapis.com/maps/api/js', array('key'=>$CFG->googlemapkey3, 'sensor'=>'false')));
+        }
+        $module = array('name'=>'core_iplookup', 'fullpath'=>'/iplookup/module.js');
+        $PAGE->requires->js_init_call('M.core_iplookup.init3', array($info['latitude'], $info['longitude'], $ip), true, $module);
+    
+        echo '<div id="map" style="width: 650px; height: 360px"></div>';
+}
+if ($mapprovider == "openstreetmap" ){
+	openstreetmap($lat, $lon);
+}elseif ($mapprovider == "worldmap" ){
+	worldmap($lat, $lon);
+}elseif ($mapprovider == "google" ){
+    if (empty($CFG->googlemapkey3)) {
+	openstreetmap($lat, $lon);
+    }else{
+	googlemap($lat, $lon);
+    }
+}
+
+echo '<div id="details">'. get_string('coordinates', 'admin') .': '. $info['latitude'] . ', ' . $info['longitude'] .'</div>';
+echo '<div id="note">'.$info['note'].'</div>';
+echo '<div id="debug">' . get_string('mapprovider','admin') . ': '. $mapprovider .'</div>';
 
 echo $OUTPUT->footer();
