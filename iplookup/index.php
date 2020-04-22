@@ -85,7 +85,7 @@ if (empty($CFG->googlemapkey3)) {
     $dotheight = 30;
 
     $dx = round((($info['longitude'] + 180) * ($imgwidth / 360)) - $imgwidth - $dotwidth/2);
-    $dy = round((($info['latitude'] + 90) * ($imgheight / 180)));
+    $dy = round((($info['latitude'] ) * ($imgheight / 90)) + $dotheight);
 
     echo '<div id="map" style="width:'.($imgwidth+$dotwidth).'px; height:'.$imgheight.'px;">';
     echo '<img src="earth.jpeg" style="width:'.$imgwidth.'px; height:'.$imgheight.'px" alt="" />';
