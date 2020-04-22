@@ -104,7 +104,7 @@ class block_online_users extends block_base {
 
         //Now, we have in users, the list of users to show
         //Because they are online
-        if (!empty($users)) {
+        if (!empty($users) && !isguestuser()) {
             $this->page->requires->js_call_amd('block_online_users/change_user_visibility', 'init');
             //Accessibility: Don't want 'Alt' text for the user picture; DO want it for the envelope/message link (existing lang string).
             //Accessibility: Converted <div> to <ul>, inherit existing classes & styles.
